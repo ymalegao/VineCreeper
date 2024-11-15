@@ -37,7 +37,7 @@ function setup() {
   scrollOffsetX = vine.x - width / 2; // Start centered on the vine's x position
 
   // Prepare off-screen rendering
-  buildingGraphics = createGraphics(storyWidth * totalStories, storyHeight * totalStories);
+  buildingGraphics = createGraphics(width, storyHeight * totalStories);
 
   for (let i = 0; i < totalStories; i++) {
     // Draw the brick wall for each story
@@ -150,10 +150,6 @@ function drawVine() {
       scrollOffset = constrain(scrollOffset - vine.growthRate, 0, maxScrollOffset);
     }
 
-        // Scroll the viewport up if needed
-    if (newX < scrollOffset + width / 2) {
-          scrollOffset = constrain(scrollOffset - vine.growthRate, 0, maxScrollOffset);
-    }
     if (newX < scrollOffsetX + width / 2) {
       scrollOffsetX = constrain(scrollOffsetX - vine.growthRate, 0, maxScrollOffsetX);
     }

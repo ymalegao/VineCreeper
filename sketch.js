@@ -1,8 +1,11 @@
 let brickWall;
 const totalStories = 20;
 const storyHeight = 100; // Height of each story
+const storyWidth = 100;
 let scrollOffset = 0;  
+let scrollOffsetX = 0; // New horizontal scroll offset
 let maxScrollOffset;
+let maxScrollOffsetX = 0; // New horizontal scroll offset
 let buildingGraphics;
 let viewAll = false; // Variable to track if we want to view the entire building
 
@@ -28,10 +31,13 @@ function setup() {
 
   // Calculate maximum scroll offset
   maxScrollOffset = (storyHeight * totalStories) - height;
+  maxScrollOffsetX = (storyWidth * totalStories) - width; // Max offset for x direction
+
   scrollOffset = maxScrollOffset; // Start at the bottom of the building
+  scrollOffsetX = vine.x - width / 2; // Start centered on the vine's x position
 
   // Prepare off-screen rendering
-  buildingGraphics = createGraphics(width, storyHeight * totalStories);
+  buildingGraphics = createGraphics(storyWidth * totalStories, storyHeight * totalStories);
 
   for (let i = 0; i < totalStories; i++) {
     // Draw the brick wall for each story
@@ -45,26 +51,45 @@ function draw() {
   background(220);
 
   if (viewAll) {
-    // Display the entire building, ignoring scrollOffset
-    image(buildingGraphics, 0, 0, width, height, 0, 0, width, storyHeight * totalStories);
+    // Scale to fit the entire building without blank space
+    let scaleFactor = width / buildingGraphics.width;
+    let fullHeight = storyHeight * totalStories;
+    if (fullHeight * scaleFactor > height) {
+      scaleFactor = height / fullHeight; // Adjust to ensure height fits as well
+    }
+
+    push();
+    scale(scaleFactor);
+    image(buildingGraphics, 0, 0, width / scaleFactor, fullHeight);
+    drawVine(true, scaleFactor);
+    pop();
   } else {
-    // Update scrollOffset to follow the vine
-    scrollOffset = constrain(vine.segments[vine.segments.length - 1].y - height / 2, 0, maxScrollOffset);
+    // Update scrollOffset to follow the vine smoothly
+    if (vine.segments.length > 0) {
+      let vineTopY = vine.segments[vine.segments.length - 1].y;
+      let vineTopX = vine.segments[vine.segments.length - 1].x;
 
-    // Display the current scrollable section
-    image(buildingGraphics, 0, 0, width, height, 0, scrollOffset, width, height);
+      scrollOffset = constrain(vineTopY - height / 2, 0, maxScrollOffset);
+      scrollOffsetX = constrain(vineTopX - width / 2, 0, maxScrollOffsetX); // Horizontal scroll update
+
+    }
+
+    // Draw the visible part of the building
+    image(buildingGraphics, 0, 0, width, height, scrollOffsetX, scrollOffset, width, height);
+    drawVine(false);
   }
-
-  drawVine();
 }
 
 // function draw() {
 //   background(220);
 
 //   if (viewAll) {
-//     // Display the entire building
+//     // Display the entire building, ignoring scrollOffset
 //     image(buildingGraphics, 0, 0, width, height, 0, 0, width, storyHeight * totalStories);
 //   } else {
+//     // Update scrollOffset to follow the vine
+//     scrollOffset = constrain(vine.segments[vine.segments.length - 1].y - height / 2, 0, maxScrollOffset);
+
 //     // Display the current scrollable section
 //     image(buildingGraphics, 0, 0, width, height, 0, scrollOffset, width, height);
 //   }
@@ -72,14 +97,11 @@ function draw() {
 //   drawVine();
 // }
 
+
 function keyPressed() {
   const scrollSpeed = 10;
 
-  if (keyCode === UP_ARROW) {
-    scrollOffset = constrain(scrollOffset - scrollSpeed, 0, maxScrollOffset);
-  } else if (keyCode === DOWN_ARROW) {
-    scrollOffset = constrain(scrollOffset + scrollSpeed, 0, maxScrollOffset);
-  } else if (keyCode === LEFT_ARROW) {
+  if (keyCode === LEFT_ARROW) {
     vine.angle -= PI / 10; // Turn the vine to the left
   } else if (keyCode === RIGHT_ARROW) {
     vine.angle += PI / 10; // Turn the vine to the right
@@ -104,7 +126,7 @@ function drawVine() {
     let segment = vine.segments[i];
 
     push();
-    translate(segment.x, segment.y - scrollOffset); // Adjust for scrolling
+    translate(segment.x - scrollOffsetX, segment.y - scrollOffset); // Adjust for scrolling
     rotate(segment.angle + Math.PI / 2); // Adjust rotation so vine image aligns with angle
     image(vineImage, -vineWidth / 2, -vineHeight / 2, vineWidth, vineHeight); // Center and resize the image
     pop();
@@ -126,6 +148,14 @@ function drawVine() {
     // Scroll the viewport up if needed
     if (newY < scrollOffset + height / 2) {
       scrollOffset = constrain(scrollOffset - vine.growthRate, 0, maxScrollOffset);
+    }
+
+        // Scroll the viewport up if needed
+    if (newX < scrollOffset + width / 2) {
+          scrollOffset = constrain(scrollOffset - vine.growthRate, 0, maxScrollOffset);
+    }
+    if (newX < scrollOffsetX + width / 2) {
+      scrollOffsetX = constrain(scrollOffsetX - vine.growthRate, 0, maxScrollOffsetX);
     }
   }
 }

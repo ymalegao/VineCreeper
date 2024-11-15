@@ -45,15 +45,32 @@ function draw() {
   background(220);
 
   if (viewAll) {
-    // Display the entire building
+    // Display the entire building, ignoring scrollOffset
     image(buildingGraphics, 0, 0, width, height, 0, 0, width, storyHeight * totalStories);
   } else {
+    // Update scrollOffset to follow the vine
+    scrollOffset = constrain(vine.segments[vine.segments.length - 1].y - height / 2, 0, maxScrollOffset);
+
     // Display the current scrollable section
     image(buildingGraphics, 0, 0, width, height, 0, scrollOffset, width, height);
   }
 
   drawVine();
 }
+
+// function draw() {
+//   background(220);
+
+//   if (viewAll) {
+//     // Display the entire building
+//     image(buildingGraphics, 0, 0, width, height, 0, 0, width, storyHeight * totalStories);
+//   } else {
+//     // Display the current scrollable section
+//     image(buildingGraphics, 0, 0, width, height, 0, scrollOffset, width, height);
+//   }
+
+//   drawVine();
+// }
 
 function keyPressed() {
   const scrollSpeed = 10;
@@ -87,7 +104,7 @@ function drawVine() {
     let segment = vine.segments[i];
 
     push();
-    translate(segment.x, segment.y);
+    translate(segment.x, segment.y - scrollOffset); // Adjust for scrolling
     rotate(segment.angle + Math.PI / 2); // Adjust rotation so vine image aligns with angle
     image(vineImage, -vineWidth / 2, -vineHeight / 2, vineWidth, vineHeight); // Center and resize the image
     pop();
@@ -95,7 +112,7 @@ function drawVine() {
   }
 
   // Grow the vine
-  if (vine.length < storyHeight * totalStories) {
+  if (vine.segments[vine.segments.length - 1].y > 0) { // Stop when the vine reaches the top
     vine.length += vine.growthRate;
     
     let lastSegment = vine.segments[vine.segments.length - 1];
